@@ -31,6 +31,15 @@ app.get('/talker', async (_req, res) => {
   res.status(200).json(response);
 });
 
+app.get('/talker/search',
+  tokenValidation,
+  async (req, res) => {
+    const { q } = req.query;
+    const talkers = await readFile();
+    const result = talkers.filter((talker) => talker.name.includes(q));
+    res.status(200).json(result);
+  });
+
 app.get('/talker/:id', async (req, res) => {
   const { id } = req.params;
   const response = await readFile();
@@ -91,5 +100,19 @@ app.post('/talker',
       talkers[index] = { ...talkers[index], name, age, talk };
       await fs.writeFile('./talker.json', JSON.stringify(talkers));
       res.status(200).json({ id: Number(id), name, age, talk });
+    },
+  );
+
+  app.delete(
+    '/talker/:id',
+    tokenValidation,
+    async (req, res) => {
+      const { id } = req.params;
+      const talkers = await readFile();
+      const index = talkers.findIndex((talker) => talker.id === Number(id));
+      if (index === -1) return res.status(404).json({ message: 'Talker not found' });
+      talkers.splice(index, 1);
+      await fs.writeFile('./talker.json', JSON.stringify(talkers));
+      res.status(204).end();
     },
   );
